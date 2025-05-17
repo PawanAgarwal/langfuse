@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import { WidgetPropertySelectItem } from "@/src/features/widgets/components/WidgetPropertySelectItem";
 import { Label } from "@/src/components/ui/label";
 import { viewDeclarations } from "@/src/features/query/dataModel";
 import { type z } from "zod";
@@ -45,11 +46,16 @@ import {
   LineChart,
   BarChartHorizontal,
 } from "lucide-react";
+import {
+  buildWidgetName,
+  buildWidgetDescription,
+} from "@/src/features/widgets/utils";
 
 export function WidgetForm({
   initialValues,
   projectId,
   onSave,
+  widgetId,
 }: {
   initialValues: {
     name: string;
@@ -73,12 +79,20 @@ export function WidgetForm({
     chartType: DashboardWidgetChartType;
     chartConfig: { type: DashboardWidgetChartType; row_limit?: number };
   }) => void;
+  widgetId?: string;
 }) {
   // State for form fields
   const [widgetName, setWidgetName] = useState<string>(initialValues.name);
   const [widgetDescription, setWidgetDescription] = useState<string>(
     initialValues.description,
   );
+
+  // Determine if this is an existing widget (editing mode)
+  const isExistingWidget = Boolean(widgetId);
+
+  // Disables further auto-updates once the user edits name or description
+  const [autoLocked, setAutoLocked] = useState<boolean>(isExistingWidget);
+
   const [selectedView, setSelectedView] = useState<z.infer<typeof views>>(
     initialValues.view,
   );
@@ -101,7 +115,7 @@ export function WidgetForm({
 
   // Filter state
   const { selectedOption, dateRange, setDateRangeAndOption } =
-    useDashboardDateRange();
+    useDashboardDateRange({ defaultRelativeAggregation: "7 days" });
   const [userFilterState, setUserFilterState] = useState<FilterState>(
     initialValues.filters ?? [],
   );
@@ -190,6 +204,12 @@ export function WidgetForm({
       name: "Session",
       id: "session",
       type: "string",
+      internal: "internalValue",
+    },
+    {
+      name: "Metadata",
+      id: "metadata",
+      type: "stringObject",
       internal: "internalValue",
     },
     {
@@ -327,9 +347,14 @@ export function WidgetForm({
         const metricField = `${selectedAggregation}_${selectedMeasure}`;
 
         return {
-          dimension: item[dimensionField]
-            ? (item[dimensionField] as string)
-            : startCase(metricField === "count_count" ? "Count" : metricField),
+          dimension:
+            item[dimensionField] !== undefined
+              ? item[dimensionField]
+                ? (item[dimensionField] as string)
+                : "n/a"
+              : startCase(
+                  metricField === "count_count" ? "Count" : metricField,
+                ),
           metric: Number(item[metricField] || 0),
           time_dimension: item["time_dimension"],
         };
@@ -362,6 +387,48 @@ export function WidgetForm({
           },
     });
   };
+
+  // Update widget name when selection changes, unless locked
+  useEffect(() => {
+    if (autoLocked) return;
+
+    const suggested = buildWidgetName({
+      aggregation: selectedAggregation,
+      measure: selectedMeasure,
+      dimension: selectedDimension,
+      view: selectedView,
+    });
+
+    setWidgetName(suggested);
+  }, [
+    autoLocked,
+    selectedAggregation,
+    selectedMeasure,
+    selectedDimension,
+    selectedView,
+  ]);
+
+  // Update widget description when selection or filters change, unless locked
+  useEffect(() => {
+    if (autoLocked) return;
+
+    const suggested = buildWidgetDescription({
+      aggregation: selectedAggregation,
+      measure: selectedMeasure,
+      dimension: selectedDimension,
+      view: selectedView,
+      filters: userFilterState,
+    });
+
+    setWidgetDescription(suggested);
+  }, [
+    autoLocked,
+    selectedAggregation,
+    selectedMeasure,
+    selectedDimension,
+    selectedView,
+    userFilterState,
+  ]);
 
   return (
     <div className="flex h-full gap-4">
@@ -398,9 +465,12 @@ export function WidgetForm({
                   </SelectTrigger>
                   <SelectContent>
                     {views.options.map((view) => (
-                      <SelectItem key={view} value={view}>
-                        {startCase(view)}
-                      </SelectItem>
+                      <WidgetPropertySelectItem
+                        key={view}
+                        value={view}
+                        label={startCase(view)}
+                        description={viewDeclarations[view].description}
+                      />
                     ))}
                   </SelectContent>
                 </Select>
@@ -417,11 +487,22 @@ export function WidgetForm({
                     <SelectValue placeholder="Select metrics" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableMetrics.map((metric) => (
-                      <SelectItem key={metric.value} value={metric.value}>
-                        {metric.label}
-                      </SelectItem>
-                    ))}
+                    {availableMetrics.map((metric) => {
+                      const meta =
+                        viewDeclarations[selectedView]?.measures?.[
+                          metric.value
+                        ];
+                      return (
+                        <WidgetPropertySelectItem
+                          key={metric.value}
+                          value={metric.value}
+                          label={metric.label}
+                          description={meta?.description}
+                          unit={meta?.unit}
+                          type={meta?.type}
+                        />
+                      );
+                    })}
                   </SelectContent>
                 </Select>
                 {selectedMeasure !== "count" && (
@@ -473,11 +554,22 @@ export function WidgetForm({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {availableDimensions.map((dimension) => (
-                      <SelectItem key={dimension.value} value={dimension.value}>
-                        {dimension.label}
-                      </SelectItem>
-                    ))}
+                    {availableDimensions.map((dimension) => {
+                      const meta =
+                        viewDeclarations[selectedView]?.dimensions?.[
+                          dimension.value
+                        ];
+                      return (
+                        <WidgetPropertySelectItem
+                          key={dimension.value}
+                          value={dimension.value}
+                          label={dimension.label}
+                          description={meta?.description}
+                          unit={meta?.unit}
+                          type={meta?.type}
+                        />
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -493,7 +585,10 @@ export function WidgetForm({
                 <Input
                   id="widget-name"
                   value={widgetName}
-                  onChange={(e) => setWidgetName(e.target.value)}
+                  onChange={(e) => {
+                    if (!autoLocked) setAutoLocked(true);
+                    setWidgetName(e.target.value);
+                  }}
                   placeholder="Enter widget name"
                 />
               </div>
@@ -504,7 +599,10 @@ export function WidgetForm({
                 <Input
                   id="widget-description"
                   value={widgetDescription}
-                  onChange={(e) => setWidgetDescription(e.target.value)}
+                  onChange={(e) => {
+                    if (!autoLocked) setAutoLocked(true);
+                    setWidgetDescription(e.target.value);
+                  }}
                   placeholder="Enter widget description"
                 />
               </div>
