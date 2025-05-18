@@ -5,7 +5,7 @@ import { ApiAuthService } from "@/src/features/public-api/server/apiAuth";
 import { cors, runMiddleware } from "@/src/features/public-api/server/cors";
 import {
   validateQueryParams,
-  handleDeleteApiKey
+  handleDeleteApiKey,
 } from "@/src/ee/features/admin-api/public/projects/projectById/apiKeys/apiKeyById";
 import { hasEntitlementBasedOnPlan } from "@/src/features/entitlements/server/hasEntitlement";
 

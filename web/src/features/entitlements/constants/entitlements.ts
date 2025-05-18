@@ -34,7 +34,10 @@ const cloudAllPlansEntitlements: Entitlement[] = [
   "custom-dashboards",
 ];
 
-const selfHostedAllPlansEntitlements: Entitlement[] = ["trace-deletion",  "custom-dashboards"];
+const selfHostedAllPlansEntitlements: Entitlement[] = [
+  "trace-deletion",
+  "custom-dashboards",
+];
 
 // Entitlement Limits: Limits on the number of resources that can be created/used
 const entitlementLimits = [

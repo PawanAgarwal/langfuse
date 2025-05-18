@@ -1,6 +1,12 @@
 import { useRef, useState } from "react";
 import { UploadIcon } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/src/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/src/components/ui/dialog";
 import { Input } from "@/src/components/ui/input";
 import { ActionButton } from "@/src/components/ActionButton";
 import { useHasProjectAccess } from "@/src/features/rbac/utils/checkProjectAccess";
@@ -63,7 +69,12 @@ export const ImportPromptsButton = ({ projectId }: { projectId: string }) => {
         <DialogHeader>
           <DialogTitle>Import Prompts</DialogTitle>
         </DialogHeader>
-        <Input ref={fileInputRef} type="file" accept=".json,.csv" onChange={onChange} />
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,.csv"
+          onChange={onChange}
+        />
       </DialogContent>
     </Dialog>
   );
