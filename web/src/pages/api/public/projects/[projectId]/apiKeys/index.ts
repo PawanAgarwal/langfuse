@@ -3,10 +3,10 @@ import { prisma } from "@langfuse/shared/src/db";
 import { logger, redis } from "@langfuse/shared/src/server";
 import { ApiAuthService } from "@/src/features/public-api/server/apiAuth";
 import { cors, runMiddleware } from "@/src/features/public-api/server/cors";
-import { 
+import {
   validateQueryAndExtractId,
   handleGetApiKeys,
-  handleCreateApiKey
+  handleCreateApiKey,
 } from "@/src/ee/features/admin-api/public/projects/projectById/apiKeys";
 import { hasEntitlementBasedOnPlan } from "@/src/features/entitlements/server/hasEntitlement";
 
@@ -80,7 +80,12 @@ export default async function handler(
       case "GET":
         return await handleGetApiKeys(req, res, projectId);
       case "POST":
-        return await handleCreateApiKey(req, res, projectId, authCheck.scope.orgId);
+        return await handleCreateApiKey(
+          req,
+          res,
+          projectId,
+          authCheck.scope.orgId,
+        );
       default:
         res.status(405).json({ message: "Method Not Allowed" });
         return;

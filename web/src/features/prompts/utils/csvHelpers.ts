@@ -48,9 +48,12 @@ export async function parsePromptsCsv(file: File): Promise<CreatePromptType[]> {
         const promptValue = map.get("prompt") ?? "";
         const labels = map.get("labels")?.split("|").filter(Boolean) ?? [];
         const tags = map.get("tags")?.split("|").filter(Boolean) ?? [];
-        const config = map.get("config") ? JSON.parse(map.get("config") as string) : {};
+        const config = map.get("config")
+          ? JSON.parse(map.get("config") as string)
+          : {};
         const commitMessage = map.get("commitMessage") || undefined;
-        const prompt = type === "chat" ? JSON.parse(promptValue as string) : promptValue;
+        const prompt =
+          type === "chat" ? JSON.parse(promptValue as string) : promptValue;
         prompts.push({
           name: map.get("name") ?? "",
           type: type as PromptType,

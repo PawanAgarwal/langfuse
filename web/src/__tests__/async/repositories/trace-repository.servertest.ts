@@ -16,7 +16,9 @@ describe("Clickhouse Traces Repository Test", () => {
   });
 
   it("should throw if no traces are found", async () => {
-    expect(await getTraceById({ traceId: v4(), projectId: v4() })).toBeUndefined();
+    expect(
+      await getTraceById({ traceId: v4(), projectId: v4() }),
+    ).toBeUndefined();
   });
 
   it("should return a trace if it exists", async () => {

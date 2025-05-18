@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { Download } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/src/components/ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/src/components/ui/dropdown-menu";
 import { ActionButton } from "@/src/components/ActionButton";
 import { useHasProjectAccess } from "@/src/features/rbac/utils/checkProjectAccess";
 import { showErrorToast } from "@/src/features/notifications/showErrorToast";
@@ -17,7 +22,9 @@ export const ExportPromptsButton = ({ projectId }: { projectId: string }) => {
 
   async function handleExport(format: "json" | "csv") {
     try {
-      const data = (await exportMutation.mutateAsync({ projectId })) as LegacyValidatedPrompt[];
+      const data = (await exportMutation.mutateAsync({
+        projectId,
+      })) as LegacyValidatedPrompt[];
       let content = "";
       let mime = "text/plain";
       let ext = "txt";
@@ -63,8 +70,12 @@ export const ExportPromptsButton = ({ projectId }: { projectId: string }) => {
         </ActionButton>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <DropdownMenuItem onClick={() => handleExport("json")}>JSON</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => handleExport("csv")}>CSV</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("json")}>
+          JSON
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleExport("csv")}>
+          CSV
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
