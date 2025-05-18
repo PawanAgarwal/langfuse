@@ -1149,6 +1149,48 @@ export const promptRouter = createTRPCRouter({
       return protectedLabel;
     }),
 
+  exportAll: protectedProjectProcedure
+    .input(z.object({ projectId: z.string() }))
+    .mutation(async ({ input, ctx }) => {
+      throwIfNoProjectAccess({
+        session: ctx.session,
+        projectId: input.projectId,
+        scope: "prompts:read",
+      });
+
+      return ctx.prisma.prompt.findMany({
+        where: { projectId: input.projectId },
+        orderBy: [{ name: "asc" }, { version: "asc" }],
+      });
+    }),
+
+  importMany: protectedProjectProcedure
+    .input(
+      z.object({
+        projectId: z.string(),
+        prompts: z.array(CreatePromptSchema),
+      }),
+    )
+    .mutation(async ({ input, ctx }) => {
+      throwIfNoProjectAccess({
+        session: ctx.session,
+        projectId: input.projectId,
+        scope: "prompts:CUD",
+      });
+
+      for (const p of input.prompts) {
+        await createPrompt({
+          ...p,
+          config: p.config ?? {},
+          projectId: input.projectId,
+          createdBy: ctx.session.user.id,
+          prisma: ctx.prisma,
+        });
+      }
+
+      return { success: true, count: input.prompts.length };
+    }),
+
   removeProtectedLabel: protectedProjectProcedure
     .input(z.object({ projectId: z.string(), label: PromptLabelSchema }))
     .mutation(async ({ input, ctx }) => {
